@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OPZL — Доска объявлений</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(to top, #8b0000, #000000);
+      --text-color: white;
+      --nav-bg: rgba(0, 0, 0, 0.5);
+      --card-bg: rgba(0, 0, 0, 0.3);
+      --button-gradient: linear-gradient(45deg, #8b0000, #4B0082);
+    }
+
+    .light-theme {
+      --bg-gradient: linear-gradient(to top, #f8f9fa, #e9ecef);
+      --text-color: #333;
+      --nav-bg: rgba(255, 255, 255, 0.7);
+      --card-bg: rgba(255, 255, 255, 0.8);
+      --button-gradient: linear-gradient(45deg, #ff6b6b, #5f27cd);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-color);
+      min-height: 100vh;
+      transition: all 0.3s ease;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 15px 15px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .light-theme header {
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .user-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    #avatarPreview {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      object-fit: cover;
+    }
+
+    #settingsBtn {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px;
+      background: var(--nav-bg);
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    nav button {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      background: var(--button-gradient);
+      background-size: 200% 200%;
+      animation: gradientMove 3s ease infinite;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      white-space: nowrap;
+    }
+
+    nav button:hover {
+      transform: scale(1.05);
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    main {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .ad-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .ad-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .ad-card h3 {
+      margin-bottom: 8px;
+      color: #ff6b6b;
+    }
+
+    .light-theme .ad-card h3 {
+      color: #8b0000;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    input, textarea, select {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--text-color);
+    }
+
+    .light-theme input,
+    .light-theme textarea,
+    .light-theme select {
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.8);
+      color: #333;
+    }
+
+    button[type="submit"] {
+      padding: 10px;
+      background: var(--button-gradient);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #authForm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 250px;
+      z-index: 100;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      margin-left: 8px;
+    }
+
+    .status-active {
+      background: #4CAF50;
+    }
+
+    .status-in-progress {
+      background: #FFC107;
+      color: #333;
+    }
+
+    .status-completed {
+      background: #9E9E9E;
+    }
+
+    @media (max-width: 768px) {
+      nav button {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+      }
+      
+      header {
+        font-size: 1.5rem;
+        padding: 60px 10px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>. О . П . З . Л .</header>
+
+  <div class="user-panel">
+    <button id="settingsBtn" onclick="showSection('settings')"><i class="fas fa-cog"></i></button>
+    <img id="avatarPreview" src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Аватар" onclick="toggleAuthForm()">
+    <div id="authForm" class="hidden">
+      <input type="text" id="loginName" placeholder="Имя пользователя">
+      <input type="password" id="loginPassword" placeholder="Пароль">
+      <button onclick="register()">Регистрация</button>
+      <button onclick="login()">Войти</button>
+    </div>
+    <div id="userActions" class="hidden">
+      <span id="username">Гость</span>
+      <button onclick="logout()">Выйти</button>
+    </div>
+  </div>
+
+  <nav>
+    <button onclick="showSection('mainMenu')"><i class="fas fa-home"></i> Главная</button>
+    <button onclick="showSection('form')"><i class="fas fa-plus"></i> Создать</button>
+    <button onclick="showSection('adsList')"><i class="fas fa-list"></i> Объявления</button>
+    <button onclick="showSection('chatList')"><i class="fas fa-comments"></i> Чаты</button>
+  </nav>
+
+  <main>
+    <div id="mainMenu" class="section active">
+      <h2>Добро пожаловать!</h2>
+      <p>Выберите раздел в меню выше.</p>
+    </div>
+
+    <div id="form" class="section">
+      <h2>Создать объявление</h2>
+      <form onsubmit="addAd(event)">
+        <input type="text" id="clientName" placeholder="Имя заказчика" required>
+        <textarea id="description" placeholder="Описание дела" rows="4" required></textarea>
+        <input type="text" id="price" placeholder="Стоимость" required>
+        <input type="text" id="location" placeholder="Место" required>
+        <select id="category" required>
+          <option value="">Выбери сложность задания</option>
+          <option value="Сложно">Сложно</option>
+          <option value="Нормально">Нормально</option>
+          <option value="Легко">Легко</option>
+          <option value="Другое">Другое</option>
+        </select>
+        <button type="submit">Добавить</button>
+      </form>
+    </div>
+
+    <div id="adsList" class="section">
+      <h2>Все объявления</h2>
+      <div id="adsContainer"></div>
+    </div>
+
+    <div id="adDetails" class="section">
+      <button onclick="showSection('adsList')"><i class="fas fa-arrow-left"></i> Назад</button>
+      <div id="adContent" style="margin-top: 15px;"></div>
+      <div id="adActions" style="margin-top: 20px; display: flex; gap: 10px;"></div>
+    </div>
+
+    <div id="chatList" class="section">
+      <h2>Чаты</h2>
+      <p>Функционал в разработке...</p>
+    </div>
+
+    <div id="userPage" class="section">
+      <h2>Профиль</h2>
+      <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+        <img id="profileAvatar" src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Аватар" style="width: 80px; height: 80px; border-radius: 50%;">
+        <div>
+          <h3 id="profileName">Гость</h3>
+          <input type="file" id="avatarUpload" accept="image/*" onchange="selectAvatar(event)" style="display: none;">
+          <button onclick="document.getElementById('avatarUpload').click()">Сменить аватар</button>
+        </div>
+      </div>
+      <div>
+        <h3>Мои объявления</h3>
+        <div id="userAds"></div>
+      </div>
+    </div>
+
+    <div id="settings" class="section">
+      <h2>Настройки</h2>
+      <div style="display: flex; flex-direction: column; gap: 15px; max-width: 300px;">
+        <label style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="darkTheme">
+          Тёмная тема
+        </label>
+        <button onclick="saveSettings()">Сохранить</button>
+        <button onclick="showSection('mainMenu')">На главную</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Глобальные переменные
+    let ads = JSON.parse(localStorage.getItem('ads')) || [];
+    let currentUser = localStorage.getItem('username') || null;
+
+    // DOM элементы
+    const elements = {
+      authForm: document.getElementById('authForm'),
+      userActions: document.getElementById('userActions'),
+      username: document.getElementById('username'),
+      profileName: document.getElementById('profileName'),
+      adsContainer: document.getElementById('adsContainer'),
+      adContent: document.getElementById('adContent'),
+      adActions: document.getElementById('adActions'),
+      userAds: document.getElementById('userAds'),
+      darkTheme: document.getElementById('darkTheme'),
+      avatarPreview: document.getElementById('avatarPreview'),
+      profileAvatar: document.getElementById('profileAvatar')
+    };
+
+    // Инициализация при загрузке
+    function init() {
+      loadUser();
+      loadTheme();
+      loadAds();
+      renderAds();
+      renderUserAds();
+    }
+
+    // Загрузка данных пользователя
+    function loadUser() {
+      const username = localStorage.getItem('username');
+      const avatar = localStorage.getItem('avatar');
+
+      if (username) {
+        currentUser = username;
+        elements.username.textContent = username;
+        elements.profileName.textContent = username;
+        elements.authForm.classList.add('hidden');
+        elements.userActions.classList.remove('hidden');
+      }
+
+      if (avatar) {
+        elements.avatarPreview.src = avatar;
+        elements.profileAvatar.src = avatar;
+      }
+    }
+
+    // Загрузка темы
+    function loadTheme() {
+      const isDark = localStorage.getItem('darkTheme') !== 'false';
+      elements.darkTheme.checked = isDark;
+      document.body.classList.toggle('light-theme', !isDark);
+    }
+
+    // Загрузка объявлений
+    function loadAds() {
+      ads = JSON.parse(localStorage.getItem('ads')) || [];
+    }
+
+    // Переключение формы авторизации
+    function toggleAuthForm() {
+      if (currentUser) {
+        showSection('userPage');
+      } else {
+        elements.authForm.classList.toggle('hidden');
+      }
+    }
+
+    // Регистрация
+    function register() {
+      const name = document.getElementById('loginName').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+
+      if (name.length < 3) return alert('Имя слишком короткое (мин. 3 символа)');
+      if (pass.length < 6) return alert('Пароль слишком короткий (мин. 6 символов)');
+
+      localStorage.setItem('reg_user', name);
+      localStorage.setItem('reg_pass', pass);
+      alert('Регистрация успешна! Теперь войдите.');
+      elements.authForm.classList.add('hidden');
+    }
+
+    // Вход
+    function login() {
+      const name = document.getElementById('loginName').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+      const storedName = localStorage.getItem('reg_user');
+      const storedPass = localStorage.getItem('reg_pass');
+
+      if (name === storedName && pass === storedPass) {
+        localStorage.setItem('username', name);
+        loadUser();
+        alert('Вход выполнен!');
+        showSection('mainMenu');
+        renderUserAds();
+      } else {
+        alert('Неверные данные!');
+      }
+    }
+
+    // Выход
+    function logout() {
+      localStorage.removeItem('username');
+      location.reload();
+    }
+
+    // Смена аватара
+    function selectAvatar(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const avatar = e.target.result;
+        elements.avatarPreview.src = avatar;
+        elements.profileAvatar.src = avatar;
+        localStorage.setItem('avatar', avatar);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Добавление объявления
+    function addAd(event) {
+      event.preventDefault();
+      
+      const name = document.getElementById('clientName').value.trim();
+      const desc = document.getElementById('description').value.trim();
+      const price = document.getElementById('price').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const category = document.getElementById('category').value;
+
+      if (!name || !desc || !price || !location || !category) {
+        return alert('Заполните все поля!');
+      }
+
+      const newAd = {
+        id: Date.now(),
+        author: localStorage.getItem('username') || 'Аноним',
+        authorId: localStorage.getItem('username'),
+        name,
+        desc,
+        price,
+        location,
+        category,
+        status: 'Активно',
+        date: new Date().toLocaleDateString(),
+        executor: null
+      };
+
+      ads.unshift(newAd);
+      localStorage.setItem('ads', JSON.stringify(ads));
+      renderAds();
+      renderUserAds();
+      showSection('adsList');
+      event.target.reset();
+    }
+
+    // Отображение объявлений
+    function renderAds() {
+      elements.adsContainer.innerHTML = '';
+      
+      if (ads.length === 0) {
+        elements.adsContainer.innerHTML = '<p>Объявлений пока нет</p>';
+        return;
+      }
+
+      ads.forEach(ad => {
+        const statusClass = getStatusClass(ad.status);
+        const adElement = document.createElement('div');
+        adElement.className = 'ad-card';
+        adElement.innerHTML = `
+          <h3>${ad.name} <span class="status-badge ${statusClass}">${ad.status}</span></h3>
+          <p>${ad.desc.substring(0, 100)}...</p>
+          <p><strong>Цена:</strong> ${ad.price}</p>
+          <p><strong>Автор:</strong> ${ad.author}</p>
+          <button onclick="viewAd(${ad.id})">Подробнее</button>
+        `;
+        elements.adsContainer.appendChild(adElement);
+      });
+    }
+
+    // Отображение объявлений пользователя
+    function renderUserAds() {
+      if (!currentUser) return;
+      
+      elements.userAds.innerHTML = '';
+      const userAds = ads.filter(ad => ad.authorId === currentUser);
+      
+      if (userAds.length === 0) {
+        elements.userAds.innerHTML = '<p>У вас нет объявлений</p>';
+        return;
+      }
+
+      userAds.forEach(ad => {
+        const statusClass = getStatusClass(ad.status);
+        const adElement = document.createElement('div');
+        adElement.className = 'ad-card';
+        adElement.innerHTML = `
+          <h3>${ad.name} <span class="status-badge ${statusClass}">${ad.status}</span></h3>
+          <p>${ad.desc.substring(0, 100)}...</p>
+          <p><strong>Цена:</strong> ${ad.price}</p>
+          <div style="margin-top: 10px;">
+            <button onclick="viewAd(${ad.id})">Подробнее</button>
+            <button onclick="deleteAd(${ad.id})" style="background: #ff6b6b; margin-left: 5px;">Удалить</button>
+          </div>
+        `;
+        elements.userAds.appendChild(adElement);
+      });
+    }
+
+    // Просмотр объявления
+    function viewAd(id) {
+      const ad = ads.find(item => item.id === id);
+      if (!ad) return;
+
+      const statusClass = getStatusClass(ad.status);
+      
+      elements.adContent.innerHTML = `
+        <h2>${ad.name} <span class="status-badge ${statusClass}">${ad.status}</span></h2>
+        <p><strong>Категория:</strong> ${ad.category}</p>
+        <p><strong>Описание:</strong> ${ad.desc}</p>
+        <p><strong>Цена:</strong> ${ad.price}</p>
+        <p><strong>Место:</strong> ${ad.location}</p>
+        <p><strong>Автор:</strong> ${ad.author}</p>
+        <p><strong>Дата:</strong> ${ad.date}</p>
+        ${ad.executor ? `<p><strong>Исполнитель:</strong> ${ad.executor}</p>` : ''}
+      `;
+
+      renderAdActions(ad);
+      showSection('adDetails');
+    }
+
+    // Отображение действий с объявлением
+    function renderAdActions(ad) {
+      elements.adActions.innerHTML = '';
+      
+      if (ad.authorId === currentUser) {
+        // Кнопки для автора
+        elements.adActions.innerHTML = `
+          <button onclick="changeAdStatus(${ad.id}, 'В работе')" ${ad.status !== 'Активно' ? 'disabled' : ''}>
+            В работу
+          </button>
+          <button onclick="changeAdStatus(${ad.id}, 'Завершено')" ${ad.status === 'Завершено' ? 'disabled' : ''}>
+            Завершить
+          </button>
+          <button onclick="deleteAd(${ad.id})" style="background: #ff6b6b;">
+            Удалить
+          </button>
+        `;
+      } else if (currentUser) {
+        // Кнопки для других пользователей
+        if (ad.status === 'Активно') {
+          elements.adActions.innerHTML = `
+            <button onclick="takeAd(${ad.id})">
+              Принять
+            </button>
+          `;
+        } else if (ad.status === 'В работе' && ad.executor === currentUser) {
+          elements.adActions.innerHTML = `
+            <button onclick="cancelAd(${ad.id})">
+              Отменить
+            </button>
+          `;
+        }
+      }
+    }
+
+    // Изменение статуса объявления
+    function changeAdStatus(id, status) {
+      ads = ads.map(ad => ad.id === id ? {...ad, status} : ad);
+      localStorage.setItem('ads', JSON.stringify(ads));
+      renderAds();
+      renderUserAds();
+      viewAd(id);
+    }
+
+    // Удаление объявления
+    function deleteAd(id) {
+      if (confirm('Удалить объявление?')) {
+        ads = ads.filter(ad => ad.id !== id);
+        localStorage.setItem('ads', JSON.stringify(ads));
+        showSection(currentUser ? 'userPage' : 'adsList');
+        renderAds();
+        renderUserAds();
+      }
+    }
+
+    // Принятие объявления
+    function takeAd(id) {
+      ads = ads.map(ad => 
+        ad.id === id ? {...ad, status: 'В работе', executor: currentUser} : ad
+      );
+      localStorage.setItem('ads', JSON.stringify(ads));
+      renderAds();
+      viewAd(id);
+    }
+
+    // Отмена принятия
+    function cancelAd(id) {
+      ads = ads.map(ad => 
+        ad.id === id ? {...ad, status: 'Активно', executor: null} : ad
+      );
+      localStorage.setItem('ads', JSON.stringify(ads));
+      renderAds();
+      viewAd(id);
+    }
+
+    // Получение класса для статуса
+    function getStatusClass(status) {
+      return {
+        'Активно': 'status-active',
+        'В работе': 'status-in-progress',
+        'Завершено': 'status-completed'
+      }[status];
+    }
+
+    // Сохранение настроек
+    function saveSettings() {
+      const isDark = elements.darkTheme.checked;
+      localStorage.setItem('darkTheme', isDark);
+      document.body.classList.toggle('light-theme', !isDark);
+      alert('Настройки сохранены!');
+    }
+
+    // Показать секцию
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+      
+      // Скрываем форму авторизации при переключении секций
+      if (id !== 'userPage') {
+        elements.authForm.classList.add('hidden');
+      }
+    }
+
+    // Инициализация при загрузке
+    window.onload = init;
+  </script>
+</body>
+</html>
